@@ -1,0 +1,80 @@
+# Laboratorio SQLi - TiendaLab
+# Entorno aislado y local. Datos ficticios. Uso exclusivamente educativo.
+#
+# Imagenes: se usan las que ya estan descargadas en la maquina, sin red.
+#   - mcr.microsoft.com/mssql/server:2025-latest  -> db + init
+#     La herramienta sqlcmd v18 viene DENTRO de esta imagen, en
+#     /opt/mssql-tools18/bin/sqlcmd, por lo que NO hace falta la imagen
+#     mcr.microsoft.com/mssql-tools (etiqueta retirada por Microsoft).
+#   - python:3.12-slim-bookworm                   -> web (via ./Dockerfile)
+#
+# Nota de plataforma: la imagen de SQL Server solo existe para linux/amd64.
+# En equipos Apple Silicon corre bajo emulacion, por lo que el arranque
+# tarda mas (1-3 min la primera vez).
+
+x-label: "Lab SQLi UAdeO"
+x-sa-password: &sa-password "Lab_Sa_Pass_2024!"
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: *sa-password
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    # El healthcheck usa el sqlcmd18 que ya trae la propia imagen. $$ se
+    # resuelve a $ dentro del contenedor, asi el password no se duplica.
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -C -b -l 5 -S localhost -U sa
+          -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -o /dev/null
+      interval: 5s
+      timeout: 15s
+      retries: 60
+      start_period: 30s
+
+  # Servicio de un solo uso: espera a que SQL Server acepte conexiones y
+  # siembra la base TiendaLab. Reutiliza la misma imagen que db.
+  init:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./init.sql:/db/init.sql:ro
+    entrypoint: ["/opt/mssql-tools18/bin/sqlcmd"]
+    command:
+      - "-C"
+      - "-b"
+      - "-S"
+      - "db"
+      - "-U"
+      - "sa"
+      - "-P"
+      - *sa-password
+      - "-i"
+      - "/db/init.sql"
+
+  web:
+    build: .
+    # APP_FILE elige la version de la app SIN reconstruir la imagen: las dos
+    # ya estan dentro. Vulnerable por defecto; la corregida se activa con
+    #   APP_FILE=app_seguro.py docker compose up -d web
+    command: ["python", "${APP_FILE:-app.py}"]
+    environment:
+      DB_HOST: db
+      DB_USER: app_login
+      DB_PASS: App_Pass_123!
+      DB_NAME: TiendaLab
+    ports:
+      # Se publica en 8000, no en 5000: en macOS el puerto 5000 lo ocupa
+      # el AirPlay Receiver (ControlCenter) y responde 403 antes de que
+      # Docker pueda atenderlo. Ver README.md.
+      - "8000:5000"
+    # La web solo arranca cuando init termino de sembrar la base.
+    depends_on:
+      init:
+        condition: service_completed_successfully

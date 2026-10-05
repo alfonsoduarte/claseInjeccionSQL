@@ -269,6 +269,11 @@ APP_FILE=app_seguro.py docker compose up -d web   # versión corregida
 docker compose up -d web                          # volver a la vulnerable
 ```
 
+> **En Windows la sintaxis es distinta** (PowerShell, no `bash`):
+> `$env:APP_FILE = "app_seguro.py"; docker compose up -d web`. Para volver a la
+> vulnerable hay que resetearla explícitamente: `$env:APP_FILE = "app.py"`.
+> El detalle está en el `README.md`.
+
 Los mismos payloads de la sesión 1 ahora se tratan como texto literal de búsqueda: no alteran la consulta.
 
 ### Corrección 2 — Mínimo privilegio
@@ -314,6 +319,43 @@ DENY SELECT ON dbo.Clientes TO app_user;
 ## 7. Reto de cierre (opcional, por equipos)
 
 Cada equipo asegura su copia del laboratorio (parametrización + mínimo privilegio) y luego intenta vulnerar la de otro equipo durante 15 minutos. Entregan un **reporte de hallazgos** con: punto de inyección probado, payloads, resultado y recomendación. Gana el equipo cuya app resistió y cuyo reporte de ataque fue más claro.
+
+> **Si el reto es entre máquinas.** Por defecto la web solo escucha en
+> `127.0.0.1`, así que cada equipo ve su propio laboratorio pero nadie puede
+> alcanzar el del vecino. Para atacarse entre equipos hay que publicarla en la
+> red, y solo mientras dura el ejercicio. Mejor todavía: si sabés la IP de tu
+> interfaz del aula, enlazá **solo esa** en lugar de `0.0.0.0`, que abre todas
+> las interfaces a la vez (ethernet, wifi, hotspot, VPN):
+>
+> ```bash
+> WEB_BIND=0.0.0.0 docker compose up -d web        # todas las interfaces
+> WEB_BIND=192.168.1.42 docker compose up -d web   # solo la del aula (mejor)
+> ```
+>
+> En Windows (PowerShell) es `$env:WEB_BIND = "0.0.0.0"; docker compose up -d web`.
+> Ver el `README.md`.
+>
+> Y para cerrarla, **indicá la interfaz de loopback de forma explícita**:
+>
+> ```bash
+> WEB_BIND=127.0.0.1 docker compose up -d web
+> docker compose config | grep host_ip     # tiene que decir 127.0.0.1
+> ```
+>
+> Ojo: `docker compose up -d web` a secas **no alcanza** si `WEB_BIND` quedó
+> exportada o en un archivo `.env`, porque Compose la sigue leyendo y la web
+> continúa abierta a la red. Verificá siempre el `host_ip` renderizado.
+>
+> Hacerlo **solo en la red del aula y con el ejercicio en curso**: el laboratorio
+> es inyectable a propósito, muestra el SQL y los errores, y escribe (la conexión
+> usa `autocommit=True`). Abierto en una red que no controlás, queda al alcance
+> de cualquiera. Si preferís no exponer nada, el reto funciona igual con cada
+> equipo atacando su propia copia: los payloads y el reporte son los mismos.
+>
+> Es, de paso, la lección de la sesión: **mínima exposición**. Que haya que abrir
+> el puerto a propósito, en vez de estar abierto siempre, es el mismo principio
+> de mínimo privilegio que aplican al login de la base. Y enlazar una sola
+> interfaz en lugar de todas es ese mismo principio un nivel más abajo.
 
 ---
 

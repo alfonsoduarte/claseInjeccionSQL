@@ -77,7 +77,12 @@ services:
       # Se publica en 8000, no en 5000: en macOS el puerto 5000 lo ocupa
       # el AirPlay Receiver (ControlCenter) y responde 403 antes de que
       # Docker pueda atenderlo. Ver README.md.
-      - "8000:5000"
+      #
+      # WEB_BIND elige en que interfaz del host se publica. Por defecto
+      # 127.0.0.1: alcanzable desde tu maquina, NO desde la red. Para el reto
+      # de la seccion 7 (equipos atacandose entre si) hay que abrirlo a
+      # proposito:  WEB_BIND=0.0.0.0 docker compose up -d web
+      - "${WEB_BIND:-127.0.0.1}:8000:5000"
     # La web solo arranca cuando init termino de sembrar la base.
     depends_on:
       init:

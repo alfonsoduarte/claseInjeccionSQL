@@ -1,0 +1,7 @@
+# Fuerza LF en el árbol de trabajo en todas las plataformas.
+#
+# Git para Windows trae core.autocrlf=true por defecto, así que sin esto un
+# alumno en Windows clonaría los archivos con CRLF. El laboratorio comparte
+# requirements.txt e init.sql con contenedores Linux, donde CRLF es una fuente
+# clásica de fallos difíciles de diagnosticar.
+* text=auto eol=lf

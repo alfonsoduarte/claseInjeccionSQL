@@ -103,13 +103,45 @@ cómo su entrada se convierte en código.
 
 ### Práctica A — Bypass de autenticación
 
-1. Intenta entrar con usuario `admin` y una contraseña cualquiera → acceso denegado.
-2. Ahora en **Usuario** escribe:
+> **No empieces por el payload.** Si el alumno arranca en `admin' --` se lleva una
+> receta de tres símbolos: sabe el truco, no la causa, y por eso después no puede
+> defenderse, porque no entiende qué está defendiendo. Los pasos van en este
+> orden a propósito.
+
+1. **Establecé el contrato.** Entrá con usuario `admin` y una contraseña
+   cualquiera. Vas a ver "Usuario o contrasena invalidos" y, debajo, la consulta
+   que el programa armó con tu entrada. No mires todavía el resultado: mirá que
+   **tu texto quedó adentro de la consulta**.
+   ```sql
+   SELECT Id, Usuario, Rol FROM Usuarios WHERE Usuario = 'admin' AND PasswordHash = 'cualquiercosa'
+   ```
+
+2. **Rompe la gramática con un solo carácter.** Ahora en **Password** escribí una
+   única comilla:
+   ```
+   '
+   ```
+   No es un exploit ni un payload: es un signo de puntuación. Y el motor contesta
+   hablando de una consulta que el alumno no escribió:
+   ```
+   (105, b"Unclosed quotation mark after the character string '''... )
+   ```
+   **Este es el paso que conviene dejar en pantalla.** Acá se entiende, sin que
+   haya que explicarlo, que la entrada se está evaluando como código.
+
+3. **Ahora sí, el bypass.** En **Usuario** escribí:
    ```
    admin' --
    ```
-   y cualquier cosa en contraseña. ¿Qué pasó? Observa el SQL ejecutado.
-3. Prueba también:
+   con cualquier cosa en contraseña. Acceso concedido. Y el `--` ya no es magia:
+   es el operador de comentario, y se ve comiéndose el resto de la consulta.
+   ```sql
+   SELECT Id, Usuario, Rol FROM Usuarios WHERE Usuario = 'admin' --' AND PasswordHash = 'loquesea'
+   ```
+   Antes de mandarlo, pediles que **escriban a mano la consulta final**. Si no
+   pueden, no entendieron: memorizaron.
+
+4. Prueba también:
    ```
    ' OR 1=1 --
    ```
@@ -183,6 +215,25 @@ Todo esto va en el campo **Buscar producto** (`/buscar?q=`).
 >
 > Tras la demostración destructiva, restaura los datos sin bajar el laboratorio:
 > `docker compose run --rm init`.
+
+### Cierre de la sesión 1 — pregunta individual (escrita)
+
+Terminá la sesión con esta pregunta, individual y por escrito:
+
+> **¿En qué momento exacto dejó de ser un dato y pasó a ser código?**
+
+La respuesta correcta **no** es "cuando el usuario escribió la comilla": es **en
+la línea de Python que concatena**. El defecto está en el código de la
+aplicación, no en la entrada de la persona.
+
+Quien responde eso entendió el tema y va a poder defender cualquier aplicación,
+no solo esta. Quien responde "cuando el atacante inyecta" sigue pensando en el
+ataque y no en la causa, y va a "arreglar" el problema validando la entrada en
+lugar de parametrizando la consulta.
+
+En `app.py` esa línea está señalada con
+`# ---- VULNERABLE: concatenacion directa de la entrada del usuario ----`.
+Pediles que la ubiquen y la citen junto con su respuesta.
 
 ---
 

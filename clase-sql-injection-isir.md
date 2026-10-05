@@ -222,7 +222,19 @@ Los mismos payloads de la sesión 1 ahora se tratan como texto literal de búsqu
 
 ### Corrección 2 — Mínimo privilegio
 
-La app no debería entrar como `db_owner`. Aplicar (como `sa`):
+La app no debería entrar como `db_owner`. Aplicar como `sa`. Primero abrí una
+sesión de `sqlcmd` contra el laboratorio:
+
+```bash
+# desde la raíz del laboratorio
+docker compose exec db /opt/mssql-tools18/bin/sqlcmd -C -b -S localhost -U sa -P 'Lab_Sa_Pass_2024!'
+```
+
+La `-C` es necesaria porque `sqlcmd` v18 valida el certificado del servidor y el
+laboratorio usa uno autofirmado. Si preferís un cliente gráfico, conectate a
+`localhost,1433` con el usuario `sa`.
+
+Y dentro de la sesión pegá:
 
 ```sql
 USE TiendaLab;

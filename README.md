@@ -11,7 +11,7 @@ docker compose up -d --build
 
 Esto levanta tres servicios:
 
-- `db` → SQL Server 2025 (puerto 1433)
+- `db` → SQL Server 2025 (puerto 1433, solo en `127.0.0.1`)
 - `init` → siembra la base `TiendaLab` y termina (one-shot)
 - `web` → la app **vulnerable** en <http://localhost:8000>
 
@@ -36,6 +36,22 @@ está rota. Por eso el laboratorio publica la web en **8000**.
 
 Si preferís el 5000, desactivá *Ajustes del Sistema → General → AirDrop y
 Handoff → Receptor de AirPlay* y cambiá el mapeo en `docker-compose.yml`.
+
+### Conectarse al motor como `sa`
+
+El puerto 1433 se publica **solo en `127.0.0.1`**: podés conectarte desde tu
+máquina con SSMS, Azure Data Studio o `sqlcmd`, pero el motor **no es alcanzable
+desde la red**. Nada del laboratorio necesita exponerlo — la app conecta por la
+red interna de Compose (`DB_HOST: db`) y las consultas de administración se hacen
+por dentro del contenedor:
+
+```bash
+docker compose exec db /opt/mssql-tools18/bin/sqlcmd -C -b -S localhost -U sa -P 'Lab_Sa_Pass_2024!'
+```
+
+La `-C` es necesaria porque `sqlcmd` v18 valida el certificado del servidor y el
+laboratorio usa uno autofirmado. Para un cliente gráfico, conectate a
+`localhost,1433` con el usuario `sa`.
 
 ## Probar la versión corregida
 

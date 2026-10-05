@@ -23,7 +23,11 @@ services:
       MSSQL_SA_PASSWORD: *sa-password
       MSSQL_PID: "Developer"
     ports:
-      - "1433:1433"
+      # Solo en loopback: alcanzable desde la maquina (SSMS, Azure Data Studio)
+      # pero NO desde la red. Nada del laboratorio necesita este puerto en el
+      # host: la app conecta por la red interna de Compose y las consultas de
+      # administracion se hacen con `docker compose exec`.
+      - "127.0.0.1:1433:1433"
     # El healthcheck usa el sqlcmd18 que ya trae la propia imagen. $$ se
     # resuelve a $ dentro del contenedor, asi el password no se duplica.
     healthcheck:

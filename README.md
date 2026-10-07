@@ -196,13 +196,15 @@ borra y el próximo `up` vuelve a sembrar la base desde cero.
 
 ## Imágenes utilizadas
 
-Se usan imágenes que ya están descargadas en la máquina, sin necesidad de
-bajar nada adicional:
+| Servicio | Imagen | Tamaño |
+|---|---|---|
+| `db`, `init` | `mcr.microsoft.com/mssql/server:2025-latest` | 1.75 GB |
+| `web` | `python:3.12-slim-bookworm` (vía `Dockerfile`) | 150 MB |
 
-| Servicio | Imagen |
-|---|---|
-| `db`, `init` | `mcr.microsoft.com/mssql/server:2025-latest` |
-| `web` | `python:3.12-slim-bookworm` (vía `Dockerfile`) |
+**El primer `docker compose up -d --build` descarga unos 1.9 GB.** Es la parte
+lenta del montaje: entre 5 y 15 minutos según la conexión, y solo la primera
+vez. Si no ves progreso en la terminal, no está colgado: está bajando. Podés
+seguirlo con `docker compose up --build` sin `-d`, que muestra el avance.
 
 El servicio `init` reutiliza la misma imagen de SQL Server en lugar de la
 imagen `mcr.microsoft.com/mssql-tools`: la herramienta `sqlcmd` v18 ya viene
@@ -220,13 +222,15 @@ para que `pip` instale Flask y pymssql dentro de la imagen de la web.
 
 ## Archivos
 
+- `INSTRUCCIONES-ALUMNOS.md` — guía de montaje para alumnos (empezá por acá)
 - `docker-compose.yml` — orquestación
 - `init.sql` — esquema + datos + login con privilegio excesivo (a corregir)
 - `app.py` — versión **vulnerable**
 - `app_seguro.py` — versión **corregida** (consultas parametrizadas)
 - `Dockerfile` — imagen de la web
 - `requirements.txt` — dependencias de Python
-- `clase-sql-injection-isir.md` — guion de la clase
+- `clase-sql-injection-isir.md` — guion de la clase (material del docente:
+  contiene los payloads y las respuestas de análisis)
 
 ## Nota sobre el modo transaccional
 

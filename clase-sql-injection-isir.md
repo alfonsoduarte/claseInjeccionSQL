@@ -3,7 +3,7 @@
 **Programa:** Ingeniería en Seguridad Informática y Redes (ISIR) — UAdeO
 **Modalidad sugerida:** 1 sesión de teoría + práctica (90 min) + 1 sesión de remediación (90 min)
 **Formato:** laboratorio práctico en entorno local aislado (Docker)
-**Entorno:** carpeta `ClaseSeguridadUadeo/` (SQL Server 2025 + app Flask vulnerable)
+**Entorno:** carpeta `claseInjeccionSQL/` (SQL Server 2025 + app Flask vulnerable)
 
 ---
 
@@ -80,7 +80,8 @@ El daño que puede hacer una inyección está acotado por los permisos del usuar
 ### Montaje (resumen; ver `README.md`)
 
 ```bash
-cd ClaseSeguridadUadeo
+git clone https://github.com/alfonsoduarte/claseInjeccionSQL.git
+cd claseInjeccionSQL
 docker compose up -d --build
 ```
 

@@ -193,6 +193,11 @@ docker compose run --rm init
 El servicio `init` vuelve a ejecutar `init.sql`, que recrea las tablas y
 las siembra de nuevo. No hace falta bajar todo el laboratorio.
 
+> **Restaurar también deshace el mínimo privilegio.** `init.sql` devuelve a
+> propósito el login de la app a `db_owner`. Si ya aplicaste
+> `min_privilegios.sql` (Corrección 2 de la guía del docente), volvé a
+> aplicarlo después de restaurar.
+
 ## Detener y limpiar
 
 ```bash
@@ -237,6 +242,7 @@ imagen de la web.
 - `INSTRUCCIONES-ALUMNOS.md` — guía de montaje para alumnos (empezá por acá)
 - `docker-compose.yml` — orquestación
 - `init.sql` — esquema + datos + login con privilegio excesivo (a corregir)
+- `min_privilegios.sql` — corrección de mínimo privilegio (se aplica como `sa`)
 - `app.py` — versión **vulnerable**
 - `app_seguro.py` — versión **corregida** (consultas parametrizadas)
 - `Dockerfile` — imagen de la web

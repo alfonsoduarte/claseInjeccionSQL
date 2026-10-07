@@ -161,6 +161,9 @@ docker compose run --rm init
 
 Vuelve a ejecutar `init.sql`, que recrea las tablas y las siembra de nuevo.
 
+> **Ojo en la sesión 2:** restaurar también devuelve la app a `db_owner`, a
+> propósito. Si ya aplicaste `min_privilegios.sql`, volvé a aplicarlo después.
+
 ---
 
 ## 7. Al terminar la clase

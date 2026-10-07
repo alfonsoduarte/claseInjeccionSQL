@@ -279,23 +279,40 @@ Los mismos payloads de la sesión 1 ahora se tratan como texto literal de búsqu
 
 ### Corrección 2 — Mínimo privilegio
 
-La app no debería entrar como `db_owner`. Aplicar como `sa`. Primero abrí una
-sesión de `sqlcmd` contra el laboratorio:
+La app no debería entrar como `db_owner`. El repo trae el script
+`min_privilegios.sql`, que se aplica como `sa` y se puede repetir sin error.
+Desde la raíz del laboratorio:
 
 ```bash
-# desde la raíz del laboratorio
+# macOS / Linux (bash, zsh)
+docker compose exec -T db /opt/mssql-tools18/bin/sqlcmd -C -b -S localhost -U sa -P 'Lab_Sa_Pass_2024!' < min_privilegios.sql
+```
+
+```powershell
+# Windows (PowerShell): PowerShell no admite la redirección `<`
+Get-Content -Raw ./min_privilegios.sql | docker compose exec -T db /opt/mssql-tools18/bin/sqlcmd -C -b -S localhost -U sa -P 'Lab_Sa_Pass_2024!'
+```
+
+La `-T` desactiva la pseudo-TTY para que la entrada estándar redirigida (`<` o
+el `|` de PowerShell) llegue intacta a `sqlcmd`; la `-C` es
+necesaria porque `sqlcmd` v18 valida el certificado del servidor y el
+laboratorio usa uno autofirmado. Debe terminar con
+`Minimo privilegio aplicado a app_user.`
+
+**Alternativa interactiva** (o un cliente gráfico en `localhost,1433` con `sa`).
+Abrí la sesión sin `-T`:
+
+```bash
 docker compose exec db /opt/mssql-tools18/bin/sqlcmd -C -b -S localhost -U sa -P 'Lab_Sa_Pass_2024!'
 ```
 
-La `-C` es necesaria porque `sqlcmd` v18 valida el certificado del servidor y el
-laboratorio usa uno autofirmado. Si preferís un cliente gráfico, conectate a
-`localhost,1433` con el usuario `sa`.
-
-Y dentro de la sesión pegá:
+Y pegá el bloque **incluido el `GO`**: `sqlcmd` acumula las líneas y no envía
+nada al motor hasta leer `GO`. Sin él no pasa nada y no hay error que avise.
 
 ```sql
 USE TiendaLab;
-ALTER ROLE db_owner DROP MEMBER app_user;
+IF IS_ROLEMEMBER('db_owner', 'app_user') = 1
+    ALTER ROLE db_owner DROP MEMBER app_user;
 
 -- Solo lo que la app realmente necesita:
 GRANT SELECT ON dbo.Productos TO app_user;
@@ -303,7 +320,32 @@ GRANT SELECT ON dbo.Usuarios  TO app_user;   -- o mejor: solo EXECUTE de un SP d
 
 -- Datos sensibles fuera del alcance de la app:
 DENY SELECT ON dbo.Clientes TO app_user;
+GO
+EXIT
 ```
+
+**Verificar** entrando como el login de la app (`app_login`), no como `sa`:
+
+```bash
+docker compose exec -T db /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U app_login -P 'App_Pass_123!' -d TiendaLab -Q "SELECT IS_ROLEMEMBER('db_owner') AS es_owner; SELECT COUNT(*) AS productos FROM dbo.Productos; SELECT * FROM dbo.Clientes;"
+```
+
+Esperado: `es_owner` vale `0`, `productos` vale `4` y la última consulta falla
+con el error 229 (*The SELECT permission was denied on the object 'Clientes'*).
+En la app vulnerable, `' UNION SELECT Nombre, Tarjeta, NULL FROM Clientes --`
+ahora muestra ese error y `'; UPDATE Productos SET Precio = 0; --` ya no
+cambia ningún precio.
+
+> **Lo que el mínimo privilegio NO arregla.** En `app.py` el bypass del login,
+> el `UNION` sobre `Usuarios`, la lectura de metadatos (`@@version`,
+> `INFORMATION_SCHEMA`) y el `WAITFOR` siguen funcionando: la app necesita leer
+> `Usuarios`, así que la inyección también. Solo acota el daño. La corrección de
+> fondo es la parametrización.
+>
+> **Restaurar deshace esta corrección.** `docker compose run --rm init` vuelve a
+> ejecutar `init.sql`, que recrea las tablas y devuelve `app_user` a `db_owner`
+> **a propósito** (es el estado vulnerable de partida). Después de restaurar,
+> volvé a aplicar `min_privilegios.sql`.
 
 **Discusión:** aunque la inyección persistiera, ¿qué ya no podría hacer el atacante con estos permisos? (No podría leer `Clientes`, ni modificar, ni borrar.)
 

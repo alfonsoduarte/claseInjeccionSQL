@@ -9,8 +9,12 @@ Datos ficticios. Uso exclusivamente educativo.
   - Windows y macOS → [Docker Desktop](https://www.docker.com/products/docker-desktop/)
   - macOS (alternativa) → [OrbStack](https://orbstack.dev/)
 - **`git`**, o bajarte el ZIP desde GitHub: *Code → Download ZIP*.
-- Unos **2 GB libres** y **conexión a internet la primera vez**, para que `pip`
-  instale Flask y pymssql dentro de la imagen de la web.
+- **Espacio en disco con margen:** se recomienda tener al menos 5 GB libres
+  para imágenes, build y capas de los contenedores (recomendación, no garantía).
+- **Memoria para Docker:** SQL Server necesita al menos 2 GB de RAM
+  disponibles; se recomienda asignarle a Docker 4 GB o más.
+- **Conexión a internet la primera vez**, para descargar las imágenes que
+  falten y para que `pip` instale Flask y pymssql dentro de la imagen de la web.
 
 No hace falta instalar SQL Server, Python ni nada más: todo vive dentro de los
 contenedores.
@@ -127,7 +131,11 @@ $env:WEB_BIND = "127.0.0.1"; docker compose up -d web   # Windows (PowerShell)
 > abierta a la red** aunque creas que la cerraste. Verificalo siempre así:
 >
 > ```bash
-> docker compose config | grep host_ip
+> docker compose config | grep host_ip            # macOS/Linux (bash/zsh)
+> ```
+>
+> ```powershell
+> docker compose config | Select-String host_ip   # Windows (PowerShell)
 > ```
 >
 > Tiene que decir `127.0.0.1`. Si dice `0.0.0.0`, todavía está expuesta.
@@ -196,14 +204,16 @@ borra y el próximo `up` vuelve a sembrar la base desde cero.
 
 ## Imágenes utilizadas
 
-| Servicio | Imagen | Tamaño |
-|---|---|---|
-| `db`, `init` | `mcr.microsoft.com/mssql/server:2025-latest` | 1.75 GB |
-| `web` | `python:3.12-slim-bookworm` (vía `Dockerfile`) | 150 MB |
+| Servicio | Imagen |
+|---|---|
+| `db`, `init` | `mcr.microsoft.com/mssql/server:2025-latest` |
+| `web` | `python:3.12-slim-bookworm` (vía `Dockerfile`) |
 
-**El primer `docker compose up -d --build` descarga unos 1.9 GB.** Es la parte
-lenta del montaje: entre 5 y 15 minutos según la conexión, y solo la primera
-vez. Si no ves progreso en la terminal, no está colgado: está bajando. Podés
+**El primer `docker compose up -d --build` descarga las imágenes que falten**
+e instala las dependencias de Python. El tiempo, el ancho de banda y el disco
+necesarios varían según la conexión y la máquina; con las imágenes ya en caché,
+los siguientes arranques no las vuelven a descargar. Si no ves progreso en la
+terminal, no está necesariamente colgado: puede estar descargando. Podés
 seguirlo con `docker compose up --build` sin `-d`, que muestra el avance.
 
 El servicio `init` reutiliza la misma imagen de SQL Server en lugar de la
@@ -213,12 +223,14 @@ etiqueta `mssql-tools` fue retirada por Microsoft.
 
 > **Plataforma.** La imagen de SQL Server solo se publica para `linux/amd64`.
 > En **Windows y Linux** sobre x86_64 corre nativa. En **Apple Silicon** (M1 y
-> posteriores) corre bajo emulación, así que el primer arranque tarda más
-> (1–3 min) y Docker avisa con *"requested image's platform does not match the
-> host platform"*: es esperado y no impide que funcione.
+> posteriores) corre bajo emulación, así que el arranque puede tardar más y
+> Docker avisa con *"requested image's platform does not match the host
+> platform"*: el aviso es esperado. El rendimiento y la compatibilidad bajo
+> emulación dependen de la versión de Docker y del equipo.
 
-`docker compose up -d --build` sí necesita red la primera vez, pero solo
-para que `pip` instale Flask y pymssql dentro de la imagen de la web.
+`docker compose up -d --build` necesita red la primera vez, para descargar las
+imágenes que falten y para que `pip` instale Flask y pymssql dentro de la
+imagen de la web.
 
 ## Archivos
 

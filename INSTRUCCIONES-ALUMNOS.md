@@ -14,9 +14,13 @@
 - **Docker Desktop instalado y abierto.** No alcanza con tenerlo instalado: si
   no está corriendo, nada de lo que sigue funciona. En Windows, con backend WSL2.
 - **`git`**, o bajarte el ZIP desde GitHub: *Code → Download ZIP*.
-- **2 GB libres** en disco.
-- **Internet la primera vez.** El primer arranque descarga las imágenes
-  (≈1.9 GB, ver sección 2). Se hace una sola vez.
+- **Espacio en disco con margen:** se recomienda tener al menos 5 GB libres
+  para imágenes, build y capas de los contenedores (es una recomendación
+  prudente, no una garantía).
+- **Memoria para Docker:** SQL Server necesita al menos 2 GB de RAM
+  disponibles; se recomienda asignarle a Docker 4 GB o más.
+- **Internet la primera vez.** El primer arranque descarga las imágenes que
+  falten e instala las dependencias de Python (ver sección 2).
 
 No hay que instalar SQL Server, Python ni nada más: todo vive dentro de los
 contenedores.
@@ -34,15 +38,12 @@ docker compose up -d --build
 **El comando tiene que salir desde la carpeta que contiene `docker-compose.yml`.**
 Si ves `no configuration file provided: not found`, estás parado en otra carpeta.
 
-La primera vez, el `--build` descarga las imágenes:
-
-| Imagen | Tamaño |
-|---|---|
-| SQL Server 2025 (`db`, `init`) | 1.75 GB |
-| Python 3.12 (`web`) | 150 MB |
-
-Eso tarda **entre 5 y 15 minutos** según la conexión. No está colgado: está
-descargando. Las próximas veces arranca en segundos.
+La primera vez, el `--build` descarga las imágenes que falten (SQL Server 2025
+para `db` e `init`, Python 3.12 para `web`) e instala las dependencias de
+Python. El tiempo, el ancho de banda y el disco necesarios varían según la
+conexión y la máquina. Si no ves avance, no está necesariamente colgado: puede
+estar descargando. Una vez que las imágenes quedan en caché, los siguientes
+arranques no vuelven a descargarlas.
 
 ### Qué levanta
 
@@ -93,14 +94,22 @@ Si esas tres cosas están, el laboratorio quedó montado. Si no, ver sección 5.
   errores del motor, y **escribe de verdad** en la base.
 - **No la expongas a la red.** Si necesitás publicarla para un ejercicio
   supervisado, se hace a propósito y se cierra después (ver `README.md`).
-  Verificá siempre con `docker compose config | grep host_ip`: tiene que decir
-  `127.0.0.1`.
+  Verificá siempre que `host_ip` diga `127.0.0.1`:
+
+  ```bash
+  docker compose config | grep host_ip            # macOS/Linux (bash/zsh)
+  ```
+
+  ```powershell
+  docker compose config | Select-String host_ip   # Windows (PowerShell)
+  ```
 - **No crees un archivo `.env`** en la carpeta del laboratorio. Persiste entre
   terminales y reinicios, y cambia el comportamiento sin que te des cuenta.
-- **Escribí las comillas a mano, en el teclado.** Las comillas, el `--` y el `%`
-  tienen que ser **ASCII**, no tipográficos. Si copiás un payload desde Word,
-  Notas o un PDF, la comilla llega como `'` en lugar de `'` y **la inyección no
-  rompe nada**: el motor la trata como texto literal. Vas a creer que el ataque
+- **Usá comillas ASCII, no tipográficas.** Las comillas, el `--` y el `%`
+  tienen que ser **ASCII**. Copiar desde texto plano está bien; el problema son
+  los editores que convierten comillas (Word, Notas, un PDF): la comilla llega
+  como `’` (tipográfica, U+2019) en lugar de `'` (ASCII, U+0027) y **la
+  inyección no rompe nada**: el motor la trata como texto literal. Vas a creer que el ataque
   no funciona cuando el problema es la comilla. Es el error que más tiempo
   cuesta en clase.
 - **En Windows la sintaxis de las variables es distinta** (PowerShell, no bash):
@@ -125,7 +134,7 @@ Si esas tres cosas están, el laboratorio quedó montado. Si no, ver sección 5.
 | Lo que ves | Qué pasa | Qué hacer |
 |---|---|---|
 | `Cannot connect to the Docker daemon` | Docker Desktop no está abierto | Abrilo, esperá a que diga *Running*, reintentá |
-| `requested image's platform (linux/amd64) does not match the detected host platform` | Tenés Apple Silicon (M1 o posterior). La imagen de SQL Server solo existe para `linux/amd64` | **Es esperado.** No hagas nada: corre bajo emulación y el primer arranque tarda 1–3 min más |
+| `requested image's platform (linux/amd64) does not match the detected host platform` | Tenés Apple Silicon (M1 o posterior). La imagen de SQL Server solo existe para `linux/amd64` | **Es esperado.** Corre bajo emulación y el arranque puede tardar más; el rendimiento y la compatibilidad dependen de tu Docker y tu equipo |
 | `no configuration file provided: not found` | No estás en la carpeta del laboratorio | `cd claseInjeccionSQL` y reintentá |
 | `port is already allocated` (8000 o 1433) | Otro programa usa ese puerto (otro SQL Server local, otra app) | Bajá lo que lo ocupa, o cambiá el mapeo en `docker-compose.yml` |
 | El `--build` corta en `pip install` | Se cortó la conexión (portal cautivo de la wifi) | Reconectate y repetí `docker compose up -d --build`. Docker continúa desde donde quedó |

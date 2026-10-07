@@ -10,7 +10,7 @@ Corregir instrucciones erróneas y comprobar el montaje y uso básico de TiendaL
 - Usuario autorizó publicar en main. Rama de trabajo: docs/correcciones-alumnos.
 
 ## Tareas
-- [ ] T1 — Corregir las guías, verificar estructura y montaje básico, y publicar en main. Estado: en curso; pruebas aprobadas, publicación pendiente.
+- [x] T1 — Corregir las guías, verificar estructura y montaje básico, y publicar en main. Estado: completada; pruebas aprobadas y publicación remota verificada.
 - [ ] T2 — Completar comprobación de las prácticas de inyección y mínimo privilegio. Estado: pendiente; no ejecutadas. No es un bloqueo para publicar las correcciones documentales, pero impide declarar todo el laboratorio validado.
 
 ## Criterios de aceptación T1
@@ -40,7 +40,7 @@ Corregir instrucciones erróneas y comprobar el montaje y uso básico de TiendaL
 - No asegurar compatibilidad universal: se verificó el montaje y uso básico en este host.
 
 ## Publicación
-Pendiente commit y push. Reversión acotada: INSTRUCCIONES-ALUMNOS.md y README.md; no cambia comportamiento de aplicaciones ni base.
+Work-unit commit: 1f08d4b2a846ac0e4bf06d44a6dbe40e1e736e01. Push a origin/main exitoso y SHA confirmado con git ls-remote. Reversión acotada: INSTRUCCIONES-ALUMNOS.md y README.md; no cambia comportamiento de aplicaciones ni base.
 
 ## Próximo paso
-Publicar las correcciones; alumnos pueden seguir el montaje. Completar T2 antes de afirmar que todas las prácticas fueron verificadas.
+Alumnos pueden seguir el montaje publicado en main. Completar T2 antes de afirmar que todas las prácticas fueron verificadas.

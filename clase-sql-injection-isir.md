@@ -299,8 +299,7 @@ necesaria porque `sqlcmd` v18 valida el certificado del servidor y el
 laboratorio usa uno autofirmado. Debe terminar con
 `Minimo privilegio aplicado a app_user.`
 
-**Alternativa interactiva** (o un cliente gráfico en `localhost,1433` con `sa`).
-Abrí la sesión sin `-T`:
+**Alternativa interactiva con `sqlcmd`.** Abrí la sesión sin `-T`:
 
 ```bash
 docker compose exec db /opt/mssql-tools18/bin/sqlcmd -C -b -S localhost -U sa -P 'Lab_Sa_Pass_2024!'
@@ -323,6 +322,9 @@ DENY SELECT ON dbo.Clientes TO app_user;
 GO
 EXIT
 ```
+
+Si usás un cliente gráfico en `localhost,1433` como `sa`, ejecutá el SQL del
+bloque anterior **sin `EXIT`**: es una instrucción de `sqlcmd`, no de T-SQL.
 
 **Verificar** entrando como el login de la app (`app_login`), no como `sa`:
 

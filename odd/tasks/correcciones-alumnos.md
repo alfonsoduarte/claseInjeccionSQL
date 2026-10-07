@@ -12,7 +12,7 @@ Corregir instrucciones erróneas y comprobar el montaje y uso básico de TiendaL
 ## Tareas
 - [x] T1 — Corregir las guías, verificar estructura y montaje básico, y publicar en main. Estado: completada; pruebas aprobadas y publicación remota verificada.
 - [ ] T2 — Completar comprobación de las prácticas de inyección y mínimo privilegio. Estado: pendiente/bloqueada; los ejecutores se detuvieron por su clasificador de seguridad. No se ejecutaron pruebas SQLi ni de permisos, no se creó tests/verify_lab.py ni se iniciaron fixtures nuevas.
-- [ ] T3 — Corregir instrucciones de mínimo privilegio y publicar el helper SQL con comprobación estructural independiente. Estado: en curso. No equivale a completar T2.
+- [x] T3 — Corregir instrucciones de mínimo privilegio y publicar el helper SQL con comprobación estructural independiente. Estado: completada; commit 6fb327d publicado y SHA remoto confirmado. No equivale a completar T2.
 
 ## Criterios de aceptación T1
 - Mostrar `’` (U+2019) frente a `'` (U+0027).
@@ -53,12 +53,18 @@ Corregir instrucciones erróneas y comprobar el montaje y uso básico de TiendaL
 Work-unit commit: 1f08d4b2a846ac0e4bf06d44a6dbe40e1e736e01. Push a origin/main exitoso y SHA confirmado con git ls-remote. Reversión acotada: INSTRUCCIONES-ALUMNOS.md y README.md; no cambia comportamiento de aplicaciones ni base.
 
 ## Próximo paso
-Publicar T3 solo con evidencia estructural/revisión; mantener T2 pendiente y sin garantías de validación funcional completa.
+T3 publicada. Completar T2 en un entorno/ejecutor que permita las pruebas autorizadas; no declarar validación funcional completa.
 
 ## Correcciones T3
 - Worker agregó min_privilegios.sql: USE/GO, DROP MEMBER condicional, GRANT SELECT Productos/Usuarios, DENY SELECT Clientes, GO final.
 - Guion: comandos stdin para bash y PowerShell, explicación correcta de -T, GO/EXIT interactivo, comprobación como app_login y límites del mínimo privilegio.
 - Tres guías advierten que init.sql restaura db_owner y requiere reaplicar la corrección.
-- Worker observó RED estructural: bloque original sin GO (grep exit 1); git diff --check posterior exit 0. GREEN independiente pendiente.
+- Worker observó RED estructural: bloque original sin GO (grep exit 1); git diff --check posterior exit 0. GREEN estructural independiente: Python de lectura verificó 21 controles, todos PASS, exit 0. git diff --cached --check exit 0. Apps, init y Compose sin cambios.
 - Fallos de ejecutores: verificador sin handoff válido; writer alcanzó cambios documentales/SQL y luego bloqueó la escritura de la prueba por clasificador. Se preservaron cambios parciales y se detuvo ese alcance. No se evade el bloqueo.
 - Código vulnerable y parametrizado, Compose y datos anteriores sin cambios. No se simula evidencia de ejecución.
+
+## Cierre T3
+- Work-unit 6fb327d725bc8b2d7bb1916be2dd18c8b3549b19 publicado en origin/main y confirmado por git ls-remote.
+- Revisión nativa review-8dc750c1c416cab8: approved; acknowledgement exitoso, authority burned. No sustituye pruebas funcionales.
+- Advertencias no bloqueantes: idempotencia y resultados de permisos no comprobados en motor; PowerShell no probado. Seguimiento documental separado: EXIT se aclaró como exclusivo de sqlcmd, no T-SQL para clientes gráficos.
+- Sin archivo tests/verify_lab.py, sin nuevas bases/fixtures ni cambios en contenedores anteriores. T2 sigue pendiente por bloqueo de ejecutores; no se inventó evidencia.
